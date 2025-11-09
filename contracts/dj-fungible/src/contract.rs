@@ -5,13 +5,13 @@
 //! controlled token transfers by an admin who can allow or disallow specific
 //! accounts.
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, symbol_short, token, Address, Env, String,
+    contract, contracterror, contractimpl, contracttype, token, Address, Env, String,
 };
 use stellar_access::{
     access_control::{self as access_control, AccessControl},
-    ownable,
+    ownable::{self as ownable, Ownable},
 };
-use stellar_macros::{default_impl, only_owner, only_role};
+use stellar_macros::{default_impl, only_owner};
 use stellar_tokens::fungible::{
     allowlist::{AllowList, FungibleAllowList},
     burnable::FungibleBurnable,
@@ -43,21 +43,25 @@ pub struct ExampleContract;
 
 #[contractimpl]
 impl ExampleContract {
-    pub fn __constructor(e: &Env, admin: Address, manager: Address, initial_supply: i128) {
-        Base::set_metadata(
-            e,
-            18,
-            String::from_str(e, "AllowList Token"),
-            String::from_str(e, "ALT"),
-        );
+    pub fn __constructor(
+        e: &Env,
+        admin: Address,
+        manager: Address,
+        decimals: u32,
+        name: String,
+        symbol: String,
+        initial_supply: i128,
+    ) {
+        Base::set_metadata(e, decimals, name, symbol);
 
         access_control::set_admin(e, &admin);
+        ownable::set_owner(e, &admin);
 
         // create a role "manager" and grant it to `manager`
-        access_control::grant_role_no_auth(e, &admin, &manager, &symbol_short!("manager"));
+        // access_control::grant_role_no_auth(e, &admin, &manager, &symbol_short!("manager"));
 
         // Allow the admin to transfer tokens
-        AllowList::allow_user(e, &admin);
+        // AllowList::allow_user(e, &admin);
 
         // Mint initial supply to the admin
         Base::mint(e, &admin, initial_supply);
@@ -154,22 +158,22 @@ fn set_order_amount(e: &Env, amount: i128) {
 impl FungibleToken for ExampleContract {
     type ContractType = AllowList;
 }
-#[contractimpl]
-impl FungibleAllowList for ExampleContract {
-    fn allowed(e: &Env, account: Address) -> bool {
-        AllowList::allowed(e, &account)
-    }
+// #[contractimpl]
+// impl FungibleAllowList for ExampleContract {
+//     fn allowed(e: &Env, account: Address) -> bool {
+//         AllowList::allowed(e, &account)
+//     }
 
-    #[only_role(operator, "manager")]
-    fn allow_user(e: &Env, user: Address, operator: Address) {
-        AllowList::allow_user(e, &user)
-    }
+//     #[only_role(operator, "manager")]
+//     fn allow_user(e: &Env, user: Address, operator: Address) {
+//         AllowList::allow_user(e, &user)
+//     }
 
-    #[only_role(operator, "manager")]
-    fn disallow_user(e: &Env, user: Address, operator: Address) {
-        AllowList::disallow_user(e, &user)
-    }
-}
+//     #[only_role(operator, "manager")]
+//     fn disallow_user(e: &Env, user: Address, operator: Address) {
+//         AllowList::disallow_user(e, &user)
+//     }
+// }
 
 #[default_impl]
 #[contractimpl]
@@ -178,3 +182,7 @@ impl AccessControl for ExampleContract {}
 #[default_impl]
 #[contractimpl]
 impl FungibleBurnable for ExampleContract {}
+
+#[default_impl]
+#[contractimpl]
+impl Ownable for ExampleContract {}

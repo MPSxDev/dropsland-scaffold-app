@@ -1,11 +1,16 @@
 import React from "react";
-import { Layout, Text, Card, Button } from "@stellar/design-system";
 import { useWallet } from "../hooks/useWallet";
 import { useWalletBalance } from "../hooks/useWalletBalance";
 import { connectWallet, type Balance } from "../util/wallet";
-import { Box } from "../components/layout/Box";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-// Type guard to check if balance is a credit asset
 const isCreditAsset = (
   balance: Balance,
 ): balance is Balance & { asset_code: string; asset_issuer: string } => {
@@ -20,390 +25,147 @@ const isCreditAsset = (
 const Wallet: React.FC = () => {
   const { address, isPending } = useWallet();
   const { xlm, balances, isLoading, error } = useWalletBalance();
+  const creditBalances = balances.filter(isCreditAsset);
 
   return (
-    <Layout.Content>
-      <Layout.Inset>
-        <Box gap="lg">
-          {/* Header */}
-          <Box gap="md" style={{ padding: "1rem 0" }}>
-            <Text
-              as="h1"
-              size="xl"
-              style={{ color: "#f9fafb", fontWeight: "700" }}
-            >
-              Wallet
-            </Text>
-            <Text as="p" size="md" style={{ color: "#d1d5db" }}>
-              Manage your assets, tokens, and NFTs on Dropsland
-            </Text>
-          </Box>
+    <div className="container space-y-8 px-4 py-10">
+      <section className="space-y-2">
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-amber-300">
+          Manage Assets
+        </p>
+        <h1 className="text-4xl font-bold text-white">Wallet</h1>
+        <p className="text-muted-foreground">
+          Check balances, review issued tokens, and understand what&apos;s
+          inside your Dropsland wallet.
+        </p>
+      </section>
 
-          {!address ? (
-            /* Not Connected */
-            <div
-              style={{
-                backgroundColor: "#111827",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "12px",
-              }}
+      {!address ? (
+        <Card className="border-border/60 bg-background/70">
+          <CardHeader>
+            <CardTitle>Connect your wallet</CardTitle>
+            <CardDescription>
+              Hook up Freighter or any Stellar-compatible wallet to fetch
+              balances and start interacting with Dropsland.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              type="button"
+              onClick={() => void connectWallet()}
+              disabled={isPending}
             >
-              <Card>
-                <Box gap="md" style={{ padding: "2rem", textAlign: "center" }}>
-                  <Text
-                    as="h2"
-                    size="lg"
-                    style={{ color: "#f9fafb", fontWeight: "600" }}
-                  >
-                    Connect Your Wallet
-                  </Text>
-                  <Text as="p" size="md" style={{ color: "#d1d5db" }}>
-                    Connect your wallet to view your balance, owned tokens,
-                    NFTs, and transaction history.
-                  </Text>
-                  <Button
-                    variant="primary"
-                    size="md"
-                    onClick={() => void connectWallet()}
-                    disabled={isPending}
-                    style={{ alignSelf: "center", marginTop: "1rem" }}
-                  >
-                    {isPending ? "Connecting..." : "Connect Wallet"}
-                  </Button>
-                </Box>
-              </Card>
-            </div>
-          ) : (
-            /* Connected */
-            <Box gap="lg">
-              {/* Wallet Connection Status */}
-              <div
-                style={{
-                  backgroundColor: "#111827",
-                  border: "1px solid rgba(252, 211, 77, 0.3)",
-                  borderRadius: "12px",
-                  padding: "1.5rem",
-                }}
-              >
-                <Card>
-                  <Box gap="sm">
-                    <Text
-                      as="h2"
-                      size="md"
-                      style={{ color: "#fcd34d", fontWeight: "600" }}
-                    >
-                      Wallet Connected
-                    </Text>
-                    <Text
-                      as="p"
-                      size="sm"
-                      style={{
-                        wordBreak: "break-all",
-                        fontFamily: "monospace",
-                        color: "#9ca3af",
-                        backgroundColor: "#030712",
-                        padding: "0.75rem",
-                        borderRadius: "6px",
-                        border: "1px solid rgba(255, 255, 255, 0.05)",
-                      }}
-                    >
-                      {address}
-                    </Text>
-                  </Box>
-                </Card>
+              {isPending ? "Connecting..." : "Connect Wallet"}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          <Card className="border-border/60 bg-background/70">
+            <CardHeader>
+              <CardTitle>Wallet connected</CardTitle>
+              <CardDescription>
+                Your Stellar account is live on Dropsland.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-md border border-border/50 bg-[#05080f] p-4 font-mono text-xs text-muted-foreground break-all">
+                {address}
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Balance */}
-              <Box gap="md">
-                <Text
-                  as="h2"
-                  size="lg"
-                  style={{ color: "#f9fafb", fontWeight: "600" }}
-                >
-                  Balance
-                </Text>
-                <div
-                  style={{
-                    backgroundColor: "#111827",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "12px",
-                    padding: "1.5rem",
-                  }}
-                >
-                  <Card>
-                    <Box gap="sm">
-                      {isLoading ? (
-                        <Text as="p" size="md" style={{ color: "#d1d5db" }}>
-                          Loading balance...
-                        </Text>
-                      ) : error ? (
-                        <Text as="p" size="md" style={{ color: "#ef4444" }}>
-                          {error.message}
-                        </Text>
-                      ) : (
-                        <>
-                          <Text
-                            as="h3"
-                            size="md"
-                            style={{
-                              fontWeight: "700",
-                              color: "#fcd34d",
-                              fontSize: "1.5rem",
-                            }}
-                          >
-                            {xlm} XLM
-                          </Text>
-                          <Text as="p" size="sm" style={{ color: "#9ca3af" }}>
-                            Native Stellar balance
-                          </Text>
-                        </>
-                      )}
-                    </Box>
-                  </Card>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="border-border/60 bg-background/60">
+              <CardHeader>
+                <CardTitle>Balance</CardTitle>
+                <CardDescription>
+                  Live XLM balance + funding status.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm uppercase tracking-wide text-muted-foreground">
+                    XLM
+                  </p>
+                  <p className="text-4xl font-bold text-white">
+                    {isLoading ? "—" : `${xlm} XLM`}
+                  </p>
                 </div>
-              </Box>
-
-              {/* Owned Tokens */}
-              <Box gap="md">
-                <Text
-                  as="h2"
-                  size="lg"
-                  style={{ color: "#f9fafb", fontWeight: "600" }}
-                >
-                  Owned Tokens
-                </Text>
-                <Text as="p" size="md" style={{ color: "#d1d5db" }}>
-                  Tokens you've collected from artists on Dropsland
-                </Text>
-                {balances && balances.length > 1 ? (
-                  <Box gap="md">
-                    {balances.filter(isCreditAsset).map((balance) => (
-                      <div
-                        key={`${balance.asset_code}-${balance.asset_issuer}`}
-                        style={{
-                          backgroundColor: "#111827",
-                          border: "1px solid rgba(255, 255, 255, 0.1)",
-                          borderRadius: "12px",
-                          padding: "1.5rem",
-                          transition: "all 0.2s ease",
-                        }}
-                        onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
-                          e.currentTarget.style.backgroundColor = "#1f2937";
-                          e.currentTarget.style.borderColor =
-                            "rgba(252, 211, 77, 0.3)";
-                        }}
-                        onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
-                          e.currentTarget.style.backgroundColor = "#111827";
-                          e.currentTarget.style.borderColor =
-                            "rgba(255, 255, 255, 0.1)";
-                        }}
-                      >
-                        <Card>
-                          <Box
-                            gap="sm"
-                            direction="row"
-                            justify="space-between"
-                            align="center"
-                          >
-                            <Box gap="xs">
-                              <Text
-                                as="h3"
-                                size="md"
-                                style={{ fontWeight: "600", color: "#fcd34d" }}
-                              >
-                                {balance.asset_code}
-                              </Text>
-                              <Text
-                                as="p"
-                                size="sm"
-                                style={{ color: "#d1d5db" }}
-                              >
-                                Balance: {balance.balance}
-                              </Text>
-                              {balance.asset_issuer && (
-                                <Text
-                                  as="p"
-                                  size="xs"
-                                  style={{
-                                    fontFamily: "monospace",
-                                    color: "#9ca3af",
-                                    backgroundColor: "#030712",
-                                    padding: "0.5rem",
-                                    borderRadius: "4px",
-                                    display: "inline-block",
-                                  }}
-                                >
-                                  {balance.asset_issuer.slice(0, 20)}...
-                                </Text>
-                              )}
-                            </Box>
-                            <Button variant="secondary" size="sm" disabled>
-                              View Details
-                            </Button>
-                          </Box>
-                        </Card>
-                      </div>
-                    ))}
-                  </Box>
+                {error ? (
+                  <p className="text-sm text-red-400">{error.message}</p>
                 ) : (
-                  <div
-                    style={{
-                      backgroundColor: "#111827",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      borderRadius: "12px",
-                      padding: "1.5rem",
-                    }}
-                  >
-                    <Card>
-                      <Box gap="sm">
-                        <Text
-                          as="p"
-                          size="sm"
-                          style={{ fontStyle: "italic", color: "#9ca3af" }}
-                        >
-                          No tokens found. Start collecting tokens from your
-                          favorite artists!
-                        </Text>
-                      </Box>
-                    </Card>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {Number(xlm.replace(/,/g, "")) > 0
+                      ? "Account funded"
+                      : "Fund your account to deploy and interact."}
+                  </p>
                 )}
-              </Box>
+              </CardContent>
+            </Card>
 
-              {/* Owned NFTs */}
-              <Box gap="md">
-                <Text
-                  as="h2"
-                  size="lg"
-                  style={{ color: "#f9fafb", fontWeight: "600" }}
-                >
-                  Owned NFTs
-                </Text>
-                <Text as="p" size="md" style={{ color: "#d1d5db" }}>
-                  Exclusive NFTs that unlock special perks and content
-                </Text>
-                <div
-                  style={{
-                    backgroundColor: "#111827",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "12px",
-                    padding: "1.5rem",
-                  }}
-                >
-                  <Card>
-                    <Box gap="sm">
-                      <Text
-                        as="p"
-                        size="sm"
-                        style={{ fontStyle: "italic", color: "#9ca3af" }}
-                      >
-                        No NFTs in your wallet yet. Explore the platform to
-                        collect exclusive NFTs from artists!
-                      </Text>
-                      <Text
-                        as="p"
-                        size="sm"
-                        style={{
-                          marginTop: "1rem",
-                          color: "#d1d5db",
-                          fontWeight: "600",
-                        }}
-                      >
-                        NFTs unlock perks like:
-                      </Text>
-                      <Box
-                        gap="xs"
-                        style={{ marginLeft: "1rem", marginTop: "0.5rem" }}
-                      >
-                        <Text as="p" size="sm" style={{ color: "#d1d5db" }}>
-                          • Early track access
-                        </Text>
-                        <Text as="p" size="sm" style={{ color: "#d1d5db" }}>
-                          • Private events
-                        </Text>
-                        <Text as="p" size="sm" style={{ color: "#d1d5db" }}>
-                          • Special content
-                        </Text>
-                        <Text as="p" size="sm" style={{ color: "#d1d5db" }}>
-                          • Exclusive merchandise
-                        </Text>
-                      </Box>
-                    </Box>
-                  </Card>
-                </div>
-              </Box>
-
-              {/* Transaction History */}
-              <Box gap="md">
-                <Text
-                  as="h2"
-                  size="lg"
-                  style={{ color: "#f9fafb", fontWeight: "600" }}
-                >
-                  Transaction History
-                </Text>
-                <Text as="p" size="md" style={{ color: "#d1d5db" }}>
-                  Recent transactions and activity on your wallet
-                </Text>
-                <div
-                  style={{
-                    backgroundColor: "#111827",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "12px",
-                    padding: "1.5rem",
-                  }}
-                >
-                  <Card>
-                    <Box gap="sm">
-                      <Text
-                        as="p"
-                        size="sm"
-                        style={{ fontStyle: "italic", color: "#9ca3af" }}
-                      >
-                        No transactions yet. Your transaction history will
-                        appear here.
-                      </Text>
-                    </Box>
-                  </Card>
-                </div>
-              </Box>
-
-              {/* Info Card */}
-              <div
-                style={{
-                  backgroundColor: "#111827",
-                  border: "1px solid rgba(252, 211, 77, 0.2)",
-                  borderRadius: "12px",
-                  padding: "1.5rem",
-                }}
-              >
-                <Card>
-                  <Box gap="sm">
-                    <Text
-                      as="h3"
-                      size="md"
-                      style={{ color: "#fcd34d", fontWeight: "600" }}
+            <Card className="border-border/60 bg-background/60">
+              <CardHeader>
+                <CardTitle>Held tokens</CardTitle>
+                <CardDescription>
+                  Issued assets detected in this wallet.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {creditBalances.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No tokens yet. Collect some artist assets to see them here.
+                  </p>
+                ) : (
+                  creditBalances.map((balance) => (
+                    <div
+                      key={`${balance.asset_code}-${balance.asset_issuer}`}
+                      className="rounded-lg border border-border/40 bg-background/40 p-3"
                     >
-                      About Your Wallet
-                    </Text>
-                    <Text
-                      as="p"
-                      size="sm"
-                      style={{ color: "#d1d5db", lineHeight: "1.6" }}
-                    >
-                      Your wallet is your gateway to the Dropsland ecosystem.
-                      Collect tokens from artists, mint and own exclusive NFTs,
-                      and unlock special perks. All transactions are recorded on
-                      the blockchain for complete transparency.
-                    </Text>
-                  </Box>
-                </Card>
-              </div>
-            </Box>
-          )}
-        </Box>
-      </Layout.Inset>
-    </Layout.Content>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-base font-semibold text-white">
+                            {balance.asset_code}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Issuer: {balance.asset_issuer.slice(0, 10)}...
+                            {balance.asset_issuer.slice(-6)}
+                          </p>
+                        </div>
+                        <span className="font-mono text-sm text-amber-200">
+                          {balance.balance}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="border-border/60 bg-background/60">
+            <CardHeader>
+              <CardTitle>Owned NFTs</CardTitle>
+              <CardDescription>
+                Dropsland NFTs unlock IRL perks, early releases, and token-gated
+                chats.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                No NFTs minted yet. Watch this space or explore drops to
+                collect.
+              </p>
+              <ul className="list-disc space-y-1 pl-4">
+                <li>Private listening parties & green room access.</li>
+                <li>Token airdrops + allowlist fast tracks.</li>
+                <li>Physical merch and IRL meetups.</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 };
 

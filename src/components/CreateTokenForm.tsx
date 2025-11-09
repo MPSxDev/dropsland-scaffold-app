@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
-import "./CreateTokenForm.css";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog.tsx";
+import { Button } from "./ui/button.tsx";
+import { Input } from "./ui/input.tsx";
+import { Label } from "./ui/label.tsx";
 
 interface CreateTokenFormProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (tokenName: string, symbol: string) => void | Promise<void>;
+  onSubmit: (assetCode: string) => void | Promise<void>;
   isSubmitting?: boolean;
   error?: string | null;
   success?: { tokenAddress: string; transactionHash: string } | null;
@@ -18,37 +28,16 @@ export const CreateTokenForm: React.FC<CreateTokenFormProps> = ({
   error: externalError = null,
   success: externalSuccess = null,
 }) => {
-  const [tokenName, setTokenName] = useState("");
-  const [symbol, setSymbol] = useState("");
+  const [assetCode, setAssetCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Use external submitting state if provided, otherwise use internal state
   const isSubmittingFinal = externalIsSubmitting || isSubmitting;
 
-  // Handle escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && visible && !isSubmittingFinal) {
-        onClose();
-      }
-    };
-
-    if (visible) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "";
-    };
-  }, [visible, isSubmittingFinal, onClose]);
-
   // Reset form when modal closes
   useEffect(() => {
     if (!visible) {
-      setTokenName("");
-      setSymbol("");
+      setAssetCode("");
       setIsSubmitting(false);
     }
   }, [visible]);
@@ -56,7 +45,7 @@ export const CreateTokenForm: React.FC<CreateTokenFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!tokenName.trim() || !symbol.trim()) {
+    if (!assetCode.trim()) {
       return;
     }
 
@@ -66,14 +55,13 @@ export const CreateTokenForm: React.FC<CreateTokenFormProps> = ({
     }
 
     try {
-      const result = onSubmit(tokenName.trim(), symbol.trim().toUpperCase());
+      const result = onSubmit(assetCode.trim().toUpperCase());
       if (result instanceof Promise) {
         await result;
       }
       // Only close if not using external state management
       if (!externalIsSubmitting && !externalError && !externalSuccess) {
-        setTokenName("");
-        setSymbol("");
+        setAssetCode("");
         onClose();
       }
     } catch (error) {
@@ -87,194 +75,100 @@ export const CreateTokenForm: React.FC<CreateTokenFormProps> = ({
 
   const handleClose = () => {
     if (!isSubmittingFinal) {
-      setTokenName("");
-      setSymbol("");
+      setAssetCode("");
       onClose();
     }
   };
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && !isSubmittingFinal) {
-      handleClose();
-    }
-  };
-
-  if (!visible) {
-    return null;
-  }
-
   return (
-    <div
-      className="modal-overlay"
-      onClick={handleBackdropClick}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modal-title"
+    <Dialog
+      open={visible}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
     >
-      <div className="modal-container">
-        {/* Header */}
-        <div className="modal-header">
-          <h2 id="modal-title" className="modal-title">
-            Create Your Token
-          </h2>
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={isSubmittingFinal}
-            className="modal-close-button"
-            aria-label="Close modal"
-          >
-            <svg
-              className="modal-close-icon"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+      {visible && (
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Your Token</DialogTitle>
+            <DialogDescription>
+              Create a custom Stellar Asset (SAC) for your community. Your
+              connected wallet will be the issuer.
+            </DialogDescription>
+          </DialogHeader>
 
-        {/* Body */}
-        <div className="modal-body">
           <form
             id="createTokenForm"
+            className="space-y-4"
             onSubmit={(e) => {
               void handleSubmit(e);
             }}
           >
-            <p className="modal-description">
-              Create a custom token for your community. Choose a name and symbol
-              that represents your brand.
-            </p>
-
-            <div className="modal-inputs">
-              <div className="input-group">
-                <label htmlFor="tokenName" className="input-label">
-                  Token Name
-                </label>
-                <input
-                  id="tokenName"
-                  type="text"
-                  value={tokenName}
-                  onChange={(e) => setTokenName(e.target.value)}
-                  placeholder="e.g., My Music Token"
-                  disabled={isSubmittingFinal}
-                  required
-                  className="input-field"
-                />
-              </div>
-
-              <div className="input-group">
-                <label htmlFor="symbol" className="input-label">
-                  Token Symbol
-                </label>
-                <input
-                  id="symbol"
-                  type="text"
-                  value={symbol}
-                  onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                  placeholder="e.g., MMT"
-                  disabled={isSubmittingFinal}
-                  required
-                  maxLength={10}
-                  className="input-field"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="assetCode">Asset Code</Label>
+              <Input
+                id="assetCode"
+                type="text"
+                value={assetCode}
+                onChange={(e) => setAssetCode(e.target.value.toUpperCase())}
+                placeholder="e.g., DJUMP (1-12 chars)"
+                disabled={isSubmittingFinal}
+                required
+                autoFocus
+                maxLength={12}
+              />
+              {assetCode && (
+                <p className="text-xs text-muted-foreground">
+                  Asset code will be{" "}
+                  <span className="font-semibold text-foreground">
+                    {assetCode.toUpperCase()}
+                  </span>
+                </p>
+              )}
             </div>
 
-            {symbol && (
-              <div className="symbol-preview">
-                <p className="symbol-preview-text">
-                  Symbol will be displayed as:{" "}
-                  <strong>{symbol.toUpperCase()}</strong>
-                </p>
-              </div>
-            )}
-
-            {/* Error Message */}
             {externalError && (
-              <div
-                style={{
-                  marginTop: "1rem",
-                  padding: "0.75rem",
-                  backgroundColor: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  borderRadius: "8px",
-                  color: "#fca5a5",
-                }}
-              >
-                <p style={{ margin: 0, fontSize: "0.875rem" }}>
-                  {externalError}
-                </p>
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                {externalError}
               </div>
             )}
 
-            {/* Success Message */}
             {externalSuccess && (
-              <div
-                style={{
-                  marginTop: "1rem",
-                  padding: "0.75rem",
-                  backgroundColor: "rgba(34, 197, 94, 0.1)",
-                  border: "1px solid rgba(34, 197, 94, 0.3)",
-                  borderRadius: "8px",
-                  color: "#86efac",
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    fontSize: "0.875rem",
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  Token created successfully!
-                </p>
-                <p style={{ margin: 0, fontSize: "0.75rem", opacity: 0.8 }}>
+              <div className="rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                <p className="font-semibold">Token created successfully!</p>
+                <p className="font-mono text-xs opacity-80">
                   Address: {externalSuccess.tokenAddress.slice(0, 8)}...
                   {externalSuccess.tokenAddress.slice(-8)}
                 </p>
-                <p
-                  style={{
-                    margin: "0.25rem 0 0 0",
-                    fontSize: "0.75rem",
-                    opacity: 0.8,
-                  }}
-                >
+                <p className="font-mono text-xs opacity-80">
                   Transaction: {externalSuccess.transactionHash.slice(0, 8)}...
                   {externalSuccess.transactionHash.slice(-8)}
                 </p>
               </div>
             )}
           </form>
-        </div>
 
-        {/* Footer */}
-        <div className="modal-footer">
-          <button
-            type="submit"
-            form="createTokenForm"
-            disabled={!tokenName.trim() || !symbol.trim() || isSubmittingFinal}
-            className="modal-button-primary"
-          >
-            {isSubmittingFinal ? "Creating..." : "Create Token"}
-          </button>
-          <button
-            type="button"
-            onClick={handleClose}
-            disabled={isSubmittingFinal}
-            className="modal-button-secondary"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+          <DialogFooter>
+            <Button
+              type="submit"
+              form="createTokenForm"
+              disabled={!assetCode.trim() || isSubmittingFinal}
+            >
+              {isSubmittingFinal ? "Creating..." : "Create Token"}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleClose}
+              disabled={isSubmittingFinal}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      )}
+    </Dialog>
   );
 };
