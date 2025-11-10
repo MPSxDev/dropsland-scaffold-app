@@ -42,7 +42,7 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className="container space-y-12 px-4 py-10">
+    <div className="container mx-auto space-y-12 px-4 py-10">
       <section className="space-y-4">
         <p className="text-sm font-semibold uppercase tracking-[0.35em] text-amber-300">
           Where Music Meets Ownership
