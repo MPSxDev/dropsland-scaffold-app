@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CreateNftCollectionForm } from "@/components/CreateNftCollectionForm";
+import { RewardManagerCard } from "@/components/RewardManagerCard";
 
 const stats = [
   { label: "Token Holders", value: "0" },
@@ -93,6 +94,11 @@ const Profile: React.FC = () => {
               </Button>
             </CardContent>
           </Card>
+
+          <RewardManagerCard
+            artistPublicKey={address}
+            onRequestCreateCollection={() => setIsNftFormVisible(true)}
+          />
 
           <Card className="border-border/60 bg-background/70">
             <CardHeader>
