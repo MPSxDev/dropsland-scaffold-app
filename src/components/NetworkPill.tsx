@@ -1,8 +1,7 @@
 import React from "react";
-import { Icon } from "@stellar/design-system";
 import { useWallet } from "../hooks/useWallet";
 import { stellarNetwork } from "../contracts/util";
-import styles from "./NetworkPill.module.css";
+import { cn } from "@/lib/utils";
 
 // Format network name with first letter capitalized
 const formatNetworkName = (name: string) =>
@@ -21,26 +20,38 @@ const NetworkPill: React.FC = () => {
   const isNetworkMismatch = walletNetwork !== appNetwork;
 
   let title = "";
-  let statusClass = styles.neutral;
-  let iconColor = "#9ca3af";
+  let status: "neutral" | "error" | "success" = "neutral";
 
   if (!address) {
     title = "Connect your wallet using this network.";
-    statusClass = styles.neutral;
-    iconColor = "#9ca3af";
   } else if (isNetworkMismatch) {
     title = `Wallet is on ${walletNetwork}, connect to ${appNetwork} instead.`;
-    statusClass = styles.error;
-    iconColor = "#FF3B30";
+    status = "error";
   } else {
-    statusClass = styles.success;
-    iconColor = "#2ED06E";
+    status = "success";
   }
 
   return (
-    <div className={`${styles.networkPill} ${statusClass}`} title={title}>
-      <Icon.Circle color={iconColor} />
-      <span className={styles.networkText}>{appNetwork}</span>
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide transition",
+        status === "success" &&
+          "border-emerald-400/40 bg-emerald-400/10 text-emerald-200",
+        status === "error" && "border-red-400/40 bg-red-500/10 text-red-200",
+        status === "neutral" &&
+          "border-border/60 bg-background/50 text-muted-foreground",
+      )}
+      title={title}
+    >
+      <span
+        className={cn(
+          "size-2.5 rounded-full",
+          status === "success" && "bg-emerald-400",
+          status === "error" && "bg-red-400",
+          status === "neutral" && "bg-muted-foreground/70",
+        )}
+      />
+      <span>{appNetwork}</span>
     </div>
   );
 };

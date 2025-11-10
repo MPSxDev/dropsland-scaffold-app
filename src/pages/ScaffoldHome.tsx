@@ -1,193 +1,118 @@
-import React, { useState } from "react";
-import { Button, Layout, Text } from "@stellar/design-system";
-import { CreateTokenForm } from "../components/CreateTokenForm";
+import React from "react";
 import { useProfileType } from "../hooks/useProfileType";
-import { Box } from "../components/layout/Box";
+import CreateSACTokenButton from "../components/CreateSACTokenButton";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+const fanHighlights = [
+  {
+    title: "Direct Connection",
+    body: "Support artists without intermediaries and unlock conversations, perks, and gated drops built entirely on-chain.",
+  },
+  {
+    title: "Exclusive Access",
+    body: "Collect NFTs that unlock early track debuts, private listening sessions, and IRL event invites.",
+  },
+  {
+    title: "True Ownership",
+    body: "Every collectible and token lives on Stellar—portable, transparent, and always yours.",
+  },
+  {
+    title: "Community Power",
+    body: "Join artist-led economies where fans help shape releases, perks, and experiences.",
+  },
+];
 
 const Home: React.FC = () => {
   const { profileType } = useProfileType();
-  const [showCreateTokenForm, setShowCreateTokenForm] = useState(false);
-
-  const handleCreateToken = (tokenName: string, symbol: string) => {
-    console.log("Creating token:", { tokenName, symbol });
-    // TODO: Implement token creation logic here
-    // This is where you would call your contract or API to create the token
-    // Example: await createTokenContract(tokenName, symbol);
-  };
 
   return (
-    <Layout.Content>
-      <Layout.Inset>
-        {/* Hero Section */}
-        <Box gap="lg" style={{ marginBottom: "3rem", padding: "2rem 0" }}>
-          <Text
-            as="h1"
-            size="xl"
-            style={{
-              marginBottom: "1rem",
-              color: "#f9fafb",
-              fontWeight: "700",
-            }}
-          >
-            Welcome to Dropsland
-          </Text>
-          <Text
-            as="p"
-            size="lg"
-            style={{
-              marginBottom: "1rem",
-              color: "#fcd34d",
-              fontWeight: "600",
-            }}
-          >
-            Where Music Meets Ownership
-          </Text>
-          <Text
-            as="p"
-            size="md"
-            style={{
-              marginBottom: "1rem",
-              maxWidth: "800px",
-              color: "#d1d5db",
-              lineHeight: "1.6",
-            }}
-          >
-            Dropsland is a Web3 platform where DJs can create their own token
-            and share it with their community. Fans can collect exclusive NFTs
-            that unlock perks like early track access, private events, and
-            special content. Artists can upload their music directly, bypassing
-            intermediaries and connecting authentically with their audience.
-          </Text>
-          <Text
-            as="p"
-            size="md"
-            style={{ maxWidth: "800px", color: "#d1d5db", lineHeight: "1.6" }}
-          >
-            Everything runs on a transparent, decentralized, and global
-            blockchain infrastructure. Dropsland redefines how electronic music
-            is shared, supported, and experienced.
-          </Text>
-        </Box>
+    <div className="container space-y-12 px-4 py-10">
+      <section className="space-y-4">
+        <p className="text-sm font-semibold uppercase tracking-[0.35em] text-amber-300">
+          Where Music Meets Ownership
+        </p>
+        <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          Welcome to Dropsland
+        </h1>
+        <p className="text-lg text-muted-foreground sm:text-xl">
+          Dropsland is a Web3 playground where DJs spin up tokens, fans collect
+          cultural artifacts, and communities share in the upside. Everything is
+          powered by open, global Stellar rails.
+        </p>
+        <p className="text-muted-foreground">
+          Mint a token, drop an exclusive mix, or unlock gated perks—all without
+          waiting on a platform roadmap. You own the moment.
+        </p>
+      </section>
 
-        {profileType === "DJ" ? (
-          /* DJ Dashboard */
-          <Box gap="lg">
-            <Box gap="md" style={{ marginBottom: "2rem" }}>
-              <Text
-                as="h2"
-                size="lg"
-                style={{ color: "#f9fafb", fontWeight: "600" }}
+      {profileType === "DJ" ? (
+        <section className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">
+              DJ Command Center
+            </h2>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              Launch your social token, gate experiences with NFTs, and keep all
+              the context in one Stellar-native dashboard.
+            </p>
+          </div>
+          <Card className="bg-background/70 border-border/60">
+            <CardHeader>
+              <CardTitle>Spin up your token in minutes</CardTitle>
+              <CardDescription>
+                Choose an asset code, deploy a SAC contract, and start inviting
+                your community. No Solidity. No gatekeepers.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                <li>Share drops, perks, or merch with token holders.</li>
+                <li>Reward superfans with tiered access and experiences.</li>
+                <li>
+                  Broadcast updates across Dropsland, social, and IRL moments.
+                </li>
+              </ul>
+              <CreateSACTokenButton />
+            </CardContent>
+          </Card>
+        </section>
+      ) : (
+        <section className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">
+              Discover Artists & Communities
+            </h2>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              Collect exclusive drops, hop into token-gated chats, and follow
+              the artists defining next season&apos;s sound.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {fanHighlights.map((item) => (
+              <Card
+                key={item.title}
+                className="border-border/50 bg-gradient-to-b from-background/70 to-background/40"
               >
-                DJ Dashboard
-              </Text>
-              <Text
-                as="p"
-                size="md"
-                style={{ color: "#d1d5db", maxWidth: "600px" }}
-              >
-                Create your own token and build your community. Share exclusive
-                content, offer special perks, and connect directly with your
-                fans.
-              </Text>
-              <Button
-                variant="primary"
-                size="md"
-                onClick={() => setShowCreateTokenForm(true)}
-                style={{ alignSelf: "flex-start", marginTop: "0.5rem" }}
-              >
-                Create Your Token
-              </Button>
-            </Box>
-          </Box>
-        ) : (
-          /* Fan View */
-          <Box gap="lg">
-            <Box gap="md">
-              <Text
-                as="h2"
-                size="lg"
-                style={{ color: "#f9fafb", fontWeight: "600" }}
-              >
-                Discover Artists
-              </Text>
-              <Text
-                as="p"
-                size="md"
-                style={{ color: "#d1d5db", maxWidth: "600px" }}
-              >
-                Explore the Dropsland community. Collect exclusive NFTs, support
-                your favorite DJs, and unlock special perks.
-              </Text>
-            </Box>
-            <Box
-              gap="md"
-              style={{
-                marginTop: "2rem",
-                padding: "1.5rem",
-                backgroundColor: "#111827",
-                border: "1px solid rgba(252, 211, 77, 0.2)",
-                borderRadius: "12px",
-              }}
-            >
-              <Text
-                as="h3"
-                size="md"
-                style={{
-                  color: "#fcd34d",
-                  fontWeight: "600",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                Why Dropsland?
-              </Text>
-              <Box gap="sm">
-                <Text
-                  as="p"
-                  size="sm"
-                  style={{ color: "#d1d5db", lineHeight: "1.6" }}
-                >
-                  •{" "}
-                  <strong style={{ color: "#f9fafb" }}>
-                    Direct Connection:
-                  </strong>{" "}
-                  Connect directly with artists, no intermediaries
-                </Text>
-                <Text
-                  as="p"
-                  size="sm"
-                  style={{ color: "#d1d5db", lineHeight: "1.6" }}
-                >
-                  •{" "}
-                  <strong style={{ color: "#f9fafb" }}>Exclusive Perks:</strong>{" "}
-                  Unlock early access, private events, and special content
-                </Text>
-                <Text
-                  as="p"
-                  size="sm"
-                  style={{ color: "#d1d5db", lineHeight: "1.6" }}
-                >
-                  • <strong style={{ color: "#f9fafb" }}>Ownership:</strong> Own
-                  your NFTs and tokens on the blockchain
-                </Text>
-                <Text
-                  as="p"
-                  size="sm"
-                  style={{ color: "#d1d5db", lineHeight: "1.6" }}
-                >
-                  • <strong style={{ color: "#f9fafb" }}>Transparency:</strong>{" "}
-                  Built on decentralized, transparent blockchain infrastructure
-                </Text>
-              </Box>
-            </Box>
-          </Box>
-        )}
-      </Layout.Inset>
-      <CreateTokenForm
-        visible={showCreateTokenForm}
-        onClose={() => setShowCreateTokenForm(false)}
-        onSubmit={handleCreateToken}
-      />
-    </Layout.Content>
+                <CardHeader className="px-5">
+                  <CardTitle className="text-lg text-amber-200">
+                    {item.title}
+                  </CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    {item.body}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   );
 };
 

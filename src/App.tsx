@@ -1,60 +1,61 @@
-import { Button, Icon, Layout } from "@stellar/design-system";
-import "./App.module.css";
+import { Routes, Route, Outlet, NavLink } from "react-router-dom";
+import { Code2 } from "lucide-react";
 import ConnectAccount from "./components/ConnectAccount.tsx";
 import BottomNav from "./components/BottomNav.tsx";
 import ProfileTypeSelector from "./components/ProfileTypeSelector.tsx";
 import HeaderLogo from "./components/HeaderLogo.tsx";
-import { Routes, Route, Outlet, NavLink } from "react-router-dom";
 import Home from "./pages/Home.tsx";
 import Debugger from "./pages/Debugger.tsx";
 import Explore from "./pages/Explore.tsx";
 import Wallet from "./pages/Wallet.tsx";
 import Activity from "./pages/Activity.tsx";
 import Profile from "./pages/Profile.tsx";
+import { Button } from "./components/ui/button.tsx";
 
 const AppLayout: React.FC = () => (
-  <main>
-    <Layout.Header
-      projectId="dropsland"
-      contentCenter={
-        <div className="header-center">
+  <div className="flex min-h-screen flex-col bg-[#030712] text-foreground">
+    <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur">
+      <div className="container flex h-16 items-center gap-4">
+        <div className="flex flex-1 items-center gap-4">
           <HeaderLogo />
-          <div className="header-divider-vertical" />
+          <div className="hidden h-6 w-px bg-border/40 lg:block" />
           <ProfileTypeSelector />
         </div>
-      }
-      contentRight={
-        <div className="header-content-right">
-          <div className="header-divider-vertical" />
-
+        <div className="flex items-center gap-3">
           <ConnectAccount />
-          <nav className="header-nav header-nav-developer">
-            <NavLink
-              to="/debug"
-              style={{
-                textDecoration: "none",
-              }}
-            >
-              {({ isActive }) => (
-                <Button
-                  variant="tertiary"
-                  size="sm"
-                  onClick={() => (window.location.href = "/debug")}
-                  disabled={isActive}
-                >
-                  <Icon.Code02 size="md" />
-                  Debugger
-                </Button>
-              )}
-            </NavLink>
-          </nav>
+          <NavLink
+            to="/debug"
+            className="inline-flex"
+            style={{ textDecoration: "none" }}
+          >
+            {({ isActive }) => (
+              <Button
+                type="button"
+                size="sm"
+                variant={isActive ? "default" : "outline"}
+                className="gap-2"
+              >
+                <Code2 className="size-4" />
+                Debugger
+              </Button>
+            )}
+          </NavLink>
         </div>
-      }
-    />
-    <Outlet />
-    <Layout.Footer></Layout.Footer>
+      </div>
+    </header>
+    <main className="flex-1 pb-24">
+      <Outlet />
+    </main>
+    <footer className="border-t border-border/40 bg-background/80">
+      <div className="container flex flex-col gap-2 py-6 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+        <p>© {new Date().getFullYear()} Dropsland. All rights reserved.</p>
+        <p className="text-muted-foreground/80">
+          Built with Stellar + Tailwind.
+        </p>
+      </div>
+    </footer>
     <BottomNav />
-  </main>
+  </div>
 );
 
 function App() {
