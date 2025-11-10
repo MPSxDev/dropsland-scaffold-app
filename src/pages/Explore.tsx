@@ -18,6 +18,7 @@ interface Artist {
   genres: string[];
   isFeatured: boolean;
   tokenSymbol?: string;
+  tokenIssuer?: string;
 }
 
 const filterTabs: Array<{
@@ -46,9 +47,19 @@ const Explore: React.FC = () => {
       genres: ["Tech-House"],
       isFeatured: true,
       tokenSymbol: "JUAMPI",
+      tokenIssuer: "GD63WUTGF6SYSVXJIV57AM6EZRROY4252JJABC3MXBEOYPHILLZ5LBJJ",
     },
     {
       id: "2",
+      name: "BARBDJ",
+      handle: "barbdj",
+      genres: ["Tech-House"],
+      isFeatured: true,
+      tokenSymbol: "BARBDJ",
+      tokenIssuer: "GD63WUTGF6SYSVXJIV57AM6EZRROY4252JJABC3MXBEOYPHILLZ5LBJJ",
+    },
+    {
+      id: "3",
       name: "Banger",
       handle: "banger",
       genres: ["DNB", "Tech-House"],
@@ -58,16 +69,11 @@ const Explore: React.FC = () => {
   ];
 
   const handleBuyClick = (artist: Artist) => {
-    setSelectedArtist(artist);
-    setIsBuyDialogOpen(true);
-  };
-
-  const handleBuyConfirm = async (amount: number) => {
-    if (!selectedArtist) return;
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    console.info(
-      `Purchasing ${amount} ${selectedArtist.tokenSymbol} with USDC`,
-    );
+    // Only allow buying if both tokenSymbol and tokenIssuer are available
+    if (artist.tokenSymbol && artist.tokenIssuer) {
+      setSelectedArtist(artist);
+      setIsBuyDialogOpen(true);
+    }
   };
 
   const searchMatches = artists.filter((artist) => {
@@ -186,6 +192,7 @@ const Explore: React.FC = () => {
                     <Button
                       onClick={() => handleBuyClick(artist)}
                       className="w-full md:w-auto"
+                      disabled={!artist.tokenSymbol || !artist.tokenIssuer}
                     >
                       💰 Buy
                     </Button>
@@ -197,17 +204,20 @@ const Explore: React.FC = () => {
         </div>
       </section>
 
-      {selectedArtist && (
-        <BuyDialog
-          visible={isBuyDialogOpen}
-          onClose={() => {
-            setIsBuyDialogOpen(false);
-            setSelectedArtist(null);
-          }}
-          tokenSymbol={selectedArtist.tokenSymbol || ""}
-          onConfirm={handleBuyConfirm}
-        />
-      )}
+      {/* Buy Dialog - only show if tokenSymbol and tokenIssuer are available */}
+      {selectedArtist &&
+        selectedArtist.tokenSymbol &&
+        selectedArtist.tokenIssuer && (
+          <BuyDialog
+            visible={isBuyDialogOpen}
+            onClose={() => {
+              setIsBuyDialogOpen(false);
+              setSelectedArtist(null);
+            }}
+            tokenSymbol={selectedArtist.tokenSymbol}
+            tokenIssuer={selectedArtist.tokenIssuer}
+          />
+        )}
     </div>
   );
 };
