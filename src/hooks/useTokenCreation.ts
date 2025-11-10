@@ -1,5 +1,6 @@
 // Token Creation Hook
 import { useState, useEffect, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import { useWallet } from "./useWallet";
 import { networkPassphrase } from "../contracts/util";
 import {
@@ -17,6 +18,7 @@ import type {
 const INITIAL_STATE: TokenCreationState = {
   step: 1,
   loading: false,
+  loadingMessage: null,
   error: null,
   tokenData: null,
   distributionAccount: null,
@@ -59,12 +61,20 @@ export function useTokenCreation() {
   }, []);
 
   const setError = useCallback((error: string | null) => {
-    setState((prev) => ({ ...prev, error, loading: false }));
+    setState((prev) => ({
+      ...prev,
+      error,
+      loading: false,
+      loadingMessage: null,
+    }));
   }, []);
 
-  const setLoading = useCallback((loading: boolean) => {
-    setState((prev) => ({ ...prev, loading }));
-  }, []);
+  const setLoading = useCallback(
+    (loading: boolean, message: string | null = null) => {
+      setState((prev) => ({ ...prev, loading, loadingMessage: message }));
+    },
+    [],
+  );
 
   // Step 1: Verify wallet connection
   const checkWalletConnection = useCallback((): boolean => {
@@ -88,6 +98,13 @@ export function useTokenCreation() {
         pollingTimeoutRef.current = null;
       }
 
+      // Set loading state for polling
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        loadingMessage: "Waiting for trustline creation...",
+      }));
+
       const poll = async () => {
         try {
           const status = await checkTokenStatus(tokenCode, artistPublicKey);
@@ -106,6 +123,8 @@ export function useTokenCreation() {
             setState((prev) => ({
               ...prev,
               step: 4,
+              loading: false,
+              loadingMessage: null,
               trustlineTxHash: status.trustlineTxHash || null,
             }));
           } else if (status.status === "failed") {
@@ -151,8 +170,21 @@ export function useTokenCreation() {
         return;
       }
 
-      setLoading(true);
-      setError(null);
+      // Immediately move to step 3 and show loading
+      setState((prev) => ({
+        ...prev,
+        step: 3,
+        loading: true,
+        loadingMessage: "Preparing token and creating distribution account...",
+        error: null,
+      }));
+
+      // Small delay to ensure React renders the loading state
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Record start time to ensure minimum loading display
+      const startTime = Date.now();
+      const minLoadingTime = 1000; // Minimum 1 second to show loading
 
       try {
         const platformFeeBps = Math.round(formData.platformFee * 100); // Convert percentage to basis points
@@ -168,6 +200,14 @@ export function useTokenCreation() {
 
         const response = await prepareToken(params);
 
+        // Ensure minimum loading time has passed
+        const elapsed = Date.now() - startTime;
+        if (elapsed < minLoadingTime) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, minLoadingTime - elapsed),
+          );
+        }
+
         // Check if trustline was created automatically
         if (response.trustlineTxHash) {
           // Trustline created successfully, skip to step 4
@@ -175,6 +215,7 @@ export function useTokenCreation() {
             ...prev,
             step: 4,
             loading: false,
+            loadingMessage: null,
             tokenData: params,
             distributionAccount: response.distributionAccount,
             trustlineTxHash: response.trustlineTxHash || null,
@@ -184,7 +225,7 @@ export function useTokenCreation() {
           setState((prev) => ({
             ...prev,
             step: 3,
-            loading: false,
+            loading: true, // Keep loading true for polling
             tokenData: params,
             distributionAccount: response.distributionAccount,
           }));
@@ -195,7 +236,7 @@ export function useTokenCreation() {
           setState((prev) => ({
             ...prev,
             step: 3,
-            loading: false,
+            loading: true, // Keep loading true for polling
             tokenData: params,
             distributionAccount: response.distributionAccount,
           }));
@@ -208,7 +249,7 @@ export function useTokenCreation() {
         setError(errorMessage);
       }
     },
-    [address, setError, setLoading, startTrustlinePolling],
+    [address, setError, startTrustlinePolling],
   );
 
   // Step 4: Get XDR and sign emission transaction
@@ -223,7 +264,7 @@ export function useTokenCreation() {
       return;
     }
 
-    setLoading(true);
+    setLoading(true, "Getting emission transaction...");
     setError(null);
 
     try {
@@ -237,6 +278,7 @@ export function useTokenCreation() {
       setState((prev) => ({ ...prev, emissionXDR: xdrResponse.xdr }));
 
       // Sign transaction with wallet
+      setLoading(true, "Please sign the transaction in your wallet...");
       const signedResult = await signTransaction(xdrResponse.xdr, {
         address: address,
         networkPassphrase: networkPassphrase,
@@ -247,6 +289,7 @@ export function useTokenCreation() {
       }
 
       // Submit signed transaction
+      setLoading(true, "Submitting signed transaction...");
       const submitResponse = await submitSignedTransaction(
         signedResult.signedTxXdr,
         state.tokenData.tokenCode,
@@ -257,6 +300,7 @@ export function useTokenCreation() {
         ...prev,
         step: 5,
         loading: false,
+        loadingMessage: null,
         emissionTxHash: submitResponse.txHash,
       }));
     } catch (error) {
@@ -270,25 +314,64 @@ export function useTokenCreation() {
 
   // Step 5: Execute distribution (with trustline creation if needed)
   const handleExecuteDistribution = useCallback(async () => {
+    console.log("handleExecuteDistribution called", {
+      address,
+      tokenData: state.tokenData,
+    });
+
     if (!address || !state.tokenData) {
+      console.error("Missing required data", {
+        address,
+        tokenData: state.tokenData,
+      });
       setError("Missing required data");
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    console.log("Setting loading state...");
+    // Force synchronous state update to ensure loading is visible immediately
+    // eslint-disable-next-line react-dom/no-flush-sync
+    flushSync(() => {
+      setState((prev) => ({
+        ...prev,
+        loading: true,
+        loadingMessage: "Executing distribution...",
+        error: null,
+      }));
+    });
+
+    console.log("Loading state set, waiting for render...");
+    // Small delay to ensure React renders the loading state
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    // Record start time to ensure minimum loading display
+    const startTime = Date.now();
+    const minLoadingTime = 1000; // Minimum 1 second to show loading
 
     try {
+      console.log("Calling executeDistribution API...", {
+        address,
+        tokenCode: state.tokenData.tokenCode,
+      });
       const distributionResponse = await executeDistribution(
         address,
         state.tokenData.tokenCode,
       );
+
+      // Ensure minimum loading time has passed
+      const elapsed = Date.now() - startTime;
+      if (elapsed < minLoadingTime) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, minLoadingTime - elapsed),
+        );
+      }
 
       console.log("Distribution completed:", distributionResponse);
       setState((prev) => ({
         ...prev,
         step: 6,
         loading: false,
+        loadingMessage: null,
         distributionTxHash: distributionResponse.transactionHash,
         artistAmount: distributionResponse.artistAmount,
         platformAmount: distributionResponse.platformAmount,
@@ -319,7 +402,7 @@ export function useTokenCreation() {
       console.error("Distribution error:", error);
       setError(errorMessage);
     }
-  }, [address, state.tokenData, setError, setLoading]);
+  }, [address, state.tokenData, setError]);
 
   // Navigate to step
   const goToStep = useCallback((step: number) => {

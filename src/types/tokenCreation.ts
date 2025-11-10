@@ -73,6 +73,7 @@ export interface DistributionResponse {
 export interface TokenCreationState {
   step: number;
   loading: boolean;
+  loadingMessage: string | null;
   error: string | null;
   tokenData: TokenCreationParams | null;
   distributionAccount: string | null;
