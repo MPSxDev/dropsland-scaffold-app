@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import type {
-  MethodOptions,
+  AssembledTransaction,
   Result,
   SentTransaction,
 } from "@stellar/stellar-sdk/contract";
@@ -22,6 +22,24 @@ interface CreateCollectionResult {
   collectionAddress?: string;
 }
 
+// Extended interface for factory client with create_nft method
+// TODO: Remove this once the factory client is regenerated with the create_nft method
+interface ExtendedFactoryClient extends FactoryContractClient {
+  create_nft: (
+    params: {
+      owner: string;
+      name: string;
+      symbol: string;
+      base_uri: string;
+    },
+    options?: {
+      fee?: number;
+      timeoutInSeconds?: number;
+      simulate?: boolean;
+    },
+  ) => Promise<AssembledTransaction<Result<string>>>;
+}
+
 export function useCreateNftCollection() {
   const { address, signTransaction } = useWallet();
   const { data: contractData } = useContracts();
@@ -36,7 +54,7 @@ export function useCreateNftCollection() {
       }
 
       const factoryContract = contractData?.loadedContracts?.factory
-        ?.default as FactoryContractClient | undefined;
+        ?.default as ExtendedFactoryClient | undefined;
 
       if (!factoryContract) {
         setError(
@@ -56,30 +74,22 @@ export function useCreateNftCollection() {
       const toastId = toast.loading("Preparing transaction...");
 
       try {
-        const invocationOptions: MethodOptions & {
-          publicKey: string;
-          address: string;
-        } = {
-          publicKey: address,
-          address,
-        };
-
-        const tx = await factoryContract.create_nft(
-          {
-            owner: address,
-            name: normalizedInputs.name,
-            symbol: normalizedInputs.symbol.toUpperCase(),
-            base_uri: normalizedInputs.baseUri,
-          },
-          invocationOptions,
-        );
+        const tx = await factoryContract.create_nft({
+          owner: address,
+          name: normalizedInputs.name,
+          symbol: normalizedInputs.symbol.toUpperCase(),
+          base_uri: normalizedInputs.baseUri,
+        });
 
         toast.loading("Please sign the transaction in your wallet...", {
           id: toastId,
         });
 
         const sentTx = await tx.signAndSend({
-          signTransaction: (xdr, opts) =>
+          signTransaction: (
+            xdr: string,
+            opts?: { networkPassphrase?: string },
+          ) =>
             signTransaction(xdr, {
               ...opts,
               address,

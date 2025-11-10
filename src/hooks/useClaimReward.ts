@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import type { MethodOptions } from "@stellar/stellar-sdk/contract";
 import { Client as DjNftClient } from "dj_nft";
 import { toast } from "sonner";
 import { networkPassphrase, rpcUrl } from "../contracts/util";
@@ -29,20 +28,16 @@ export function useClaimReward() {
           networkPassphrase: String(networkPassphrase),
           rpcUrl,
           allowHttp: true,
+          publicKey: address,
         });
 
-        const methodOptions: MethodOptions & {
-          publicKey: string;
-          address: string;
-        } = {
-          publicKey: address,
-          address,
-        };
-
-        const tx = await client.award_item({ to: address }, methodOptions);
+        const tx = await client.award_item({ to: address });
 
         const sentTx = await tx.signAndSend({
-          signTransaction: (xdr, opts) =>
+          signTransaction: (
+            xdr: string,
+            opts?: { networkPassphrase?: string },
+          ) =>
             signTransaction(xdr, {
               ...opts,
               address,
